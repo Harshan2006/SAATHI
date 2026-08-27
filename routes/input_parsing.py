@@ -20,6 +20,10 @@ def parse_input():
 
     # Save the file temporarily
     ext = os.path.splitext(file.filename)[1]
+    # Handle files without extensions or with generic blobs
+    if not ext and "audio" in file.content_type:
+        ext = ".webm"
+        
     filename = f"{uuid.uuid4()}{ext}"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
@@ -32,6 +36,11 @@ def parse_input():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        # Clean up
+        # Clean up the main uploaded file
         if os.path.exists(filepath):
             os.remove(filepath)
+        
+        # Clean up any potential whisper-generated text files
+        txt_path = os.path.splitext(filepath)[0] + ".txt"
+        if os.path.exists(txt_path):
+            os.remove(txt_path)

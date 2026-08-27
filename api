@@ -4,3 +4,9 @@ GET  /api/problems/<id>
 POST /api/problems/<id>/analyze
 GET  /api/problems/<id>/matches
 GET  /api/problems/<id>/universities
+
+git status
+git add .
+git commit -m "Citizen completed"
+git pull --rebase origin main
+git push -u origin main

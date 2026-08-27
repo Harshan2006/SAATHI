@@ -53,7 +53,12 @@ Extract:
   Public Administration
   Rural Livelihoods
   Infrastructure
-- severity: LOW, MEDIUM, HIGH, or CRITICAL
+- severity: LOW, MEDIUM, HIGH, or CRITICAL. Apply this rubric strictly:
+  LOW = limited inconvenience, no safety/health risk, and few people affected.
+  MEDIUM = service disruption affecting a local group, but no immediate danger.
+  HIGH = substantial or prolonged disruption, significant health/safety risk, or many households affected.
+  CRITICAL = immediate threat to life, a major disaster, or essential-service failure requiring emergency action.
+  Do not choose HIGH or CRITICAL merely because the citizen requests urgent action.
 - affected_people: who is affected
 - keywords: important keywords
 - required_expertise: academic/technical expertise needed to solve it

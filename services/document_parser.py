@@ -23,15 +23,14 @@ def extract_text(file_path):
 
 def extract_pdf(file_path):
 
-    reader = PdfReader(file_path)
-
     text = []
 
-    for page in reader.pages:
-        page_text = page.extract_text()
-
-        if page_text:
-            text.append(page_text)
+    with open(file_path, "rb") as f:
+        reader = PdfReader(f)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text.append(page_text)
 
     return "\n".join(text).strip()
 

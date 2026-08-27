@@ -1,4 +1,4 @@
--- SAATHI Database Schema
+-- SAATHI Database Schema (Complete Citizen Portal)
 
 -- Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    password_hash TEXT, -- Added for Auth
-    role TEXT DEFAULT 'CITIZEN', -- CITIZEN, GOVERNMENT, UNIVERSITY, INDUSTRY
+    password_hash TEXT,
+    role TEXT DEFAULT 'CITIZEN',
     organization TEXT,
     location TEXT,
     phone TEXT,
@@ -26,19 +26,36 @@ CREATE TABLE IF NOT EXISTS problems (
     domain TEXT,
     severity TEXT,
     affected_people TEXT,
-    status TEXT DEFAULT 'Submitted', -- Submitted, Under Review, Accepted, In Progress, Resolved, Rejected
+    status TEXT DEFAULT 'Submitted',
     ai_summary TEXT,
     ai_keywords TEXT[],
     required_expertise TEXT[],
     latitude DOUBLE PRECISION,
-    longitude INTEGER, -- Fixed to match actual DB if needed, but usually DOUBLE PRECISION
+    longitude DOUBLE PRECISION,
     embedding vector(384),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Fix longitude type if it was accidentally set to INTEGER in context but should be DOUBLE PRECISION
-ALTER TABLE problems ALTER COLUMN longitude TYPE DOUBLE PRECISION;
+-- Supports Table (Community Support for Problems)
+CREATE TABLE IF NOT EXISTS supports (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    problem_id INTEGER REFERENCES problems(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, problem_id)
+);
+
+-- Status Updates Table (For Timeline/Tracking)
+CREATE TABLE IF NOT EXISTS status_updates (
+    id SERIAL PRIMARY KEY,
+    problem_id INTEGER REFERENCES problems(id),
+    stage TEXT NOT NULL,
+    status TEXT NOT NULL, -- completed, current, upcoming
+    message TEXT,
+    stakeholder TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Attachments Table
 CREATE TABLE IF NOT EXISTS attachments (
@@ -73,49 +90,13 @@ CREATE TABLE IF NOT EXISTS faculty (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Industries Table
-CREATE TABLE IF NOT EXISTS industries (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    industry_type TEXT,
-    expertise TEXT,
-    embedding vector(384),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Matches Table (Persistent matches)
-CREATE TABLE IF NOT EXISTS matches (
-    id SERIAL PRIMARY KEY,
-    problem_id INTEGER REFERENCES problems(id),
-    university_id INTEGER REFERENCES universities(id),
-    faculty_id INTEGER REFERENCES faculty(id),
-    industry_id INTEGER REFERENCES industries(id),
-    similarity_score DOUBLE PRECISION,
-    match_reason TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Projects Table
-CREATE TABLE IF NOT EXISTS projects (
-    id SERIAL PRIMARY KEY,
-    problem_id INTEGER REFERENCES problems(id),
-    title TEXT,
-    description TEXT,
-    status TEXT DEFAULT 'Planning',
-    start_date DATE,
-    end_date DATE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Notifications Table
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
-    type TEXT, -- Submission, Analysis, Match, StatusChange
+    type TEXT,
     message TEXT,
-    complaint_id INTEGER, -- Optional link to problem
+    complaint_id INTEGER,
     read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -127,10 +108,10 @@ CREATE TABLE IF NOT EXISTS feedback (
     user_id INTEGER REFERENCES users(id),
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
-    resolution_status TEXT, -- Completely, Partially, Not resolved
+    resolution_status TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for performance
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_problems_embedding ON problems USING hnsw (embedding vector_cosine_ops);
 CREATE INDEX IF NOT EXISTS idx_faculty_embedding ON faculty USING hnsw (embedding vector_cosine_ops);

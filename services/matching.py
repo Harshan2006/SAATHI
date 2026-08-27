@@ -1,109 +1,39 @@
 from database.connection import get_connection
 from services.embeddings import generate_embedding
 
-
 def match_faculty(problem_id, limit=5):
-
     conn = get_connection()
-
     try:
         with conn.cursor() as cursor:
-
-            # Get problem
-            cursor.execute("""
-                SELECT
-                    id,
-                    title,
-                    domain,
-                    required_expertise
-                FROM problems
-                WHERE id = %s;
-            """, (problem_id,))
-
+            # Check if embedding already exists
+            cursor.execute("SELECT embedding, domain, title, required_expertise FROM problems WHERE id = %s;", (problem_id,))
             problem = cursor.fetchone()
+            if not problem: return None
 
-            if not problem:
-                return None
+            embedding, domain, title, required_expertise = problem
 
-            (
-                problem_id,
-                title,
-                domain,
-                required_expertise
-            ) = problem
-
-            # Build expertise profile
-            expertise_text = f"""
-            Problem Domain: {domain}
-
-            Problem: {title}
-
-            Required Expertise:
-            {", ".join(required_expertise or [])}
-            """
-
-            # Generate problem expertise embedding
-            problem_embedding = generate_embedding(expertise_text)
-
-            # Store embedding
+            # If embedding is missing, generate it now (safety fallback)
+            if embedding is None:
+                expertise_text = f"Problem Domain: {domain}\nProblem: {title}\nRequired Expertise: {', '.join(required_expertise or [])}"
+                problem_embedding = generate_embedding(expertise_text)
+                cursor.execute("UPDATE problems SET embedding = %s::vector WHERE id = %s;", (str(problem_embedding), problem_id))
+                embedding = str(problem_embedding)
+            
+            # Semantic matching using pgvector
             cursor.execute("""
-                UPDATE problems
-                SET embedding = %s::vector
-                WHERE id = %s;
-            """, (
-                str(problem_embedding),
-                problem_id
-            ))
-
-            # Semantic faculty matching
-            cursor.execute("""
-                SELECT
-                    f.id,
-                    f.name,
-                    f.department,
-                    f.expertise,
-                    u.id,
-                    u.name,
-                    1 - (f.embedding <=> %s::vector) AS similarity
+                SELECT f.id, f.name, f.department, f.expertise, u.id, u.name,
+                1 - (f.embedding <=> %s::vector) AS similarity
                 FROM faculty f
-                JOIN universities u
-                    ON f.university_id = u.id
+                JOIN universities u ON f.university_id = u.id
                 WHERE f.embedding IS NOT NULL
                 ORDER BY f.embedding <=> %s::vector
                 LIMIT %s;
-            """, (
-                str(problem_embedding),
-                str(problem_embedding),
-                limit
-            ))
+            """, (embedding, embedding, limit))
 
             rows = cursor.fetchall()
-
-        results = []
-
-        for row in rows:
-
-            (
-                faculty_id,
-                faculty_name,
-                department,
-                expertise,
-                university_id,
-                university_name,
-                similarity
-            ) = row
-
-            results.append({
-                "faculty_id": faculty_id,
-                "faculty_name": faculty_name,
-                "department": department,
-                "expertise": expertise,
-                "university_id": university_id,
-                "university_name": university_name,
-                "similarity_score": round(float(similarity), 4)
-            })
-
-        return results
-
+            return [{
+                "id": r[0], "name": r[1], "department": r[2], "expertise": r[3],
+                "university_id": r[4], "university_name": r[5], "similarity": round(float(r[6]), 4)
+            } for r in rows]
     finally:
         conn.close()
