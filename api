@@ -1,0 +1,6 @@
+POST /api/problems
+GET  /api/problems
+GET  /api/problems/<id>
+POST /api/problems/<id>/analyze
+GET  /api/problems/<id>/matches
+GET  /api/problems/<id>/universities

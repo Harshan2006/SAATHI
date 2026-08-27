@@ -1,0 +1,1321 @@
+PROJECT CONTEXT — SAATHI
+========================
+
+Project Name:
+SAATHI
+
+SIH Problem Statement:
+26043
+
+Official Problem Statement Title:
+"A digital platform to crowdsource societal challenges and facilitate collaborative problem solving through universities and industry partnerships"
+
+Organization:
+Government of Jharkhand
+
+Department:
+Department of Higher & Technical Education
+
+Category:
+Software
+
+Theme:
+Smart Education
+
+
+==================================================
+1. PROJECT PURPOSE
+==================================================
+
+SAATHI is a digital platform designed around SIH Problem Statement 26043.
+
+The core idea is:
+
+Citizens and organizations submit real-world societal problems.
+The platform uses AI to understand and structure those problems.
+It then semantically matches problems with relevant university faculty/expertise and eventually industry partners.
+The platform is intended to support the complete journey from:
+
+Societal Problem
+→ AI Analysis
+→ Expert/University Matching
+→ Industry Collaboration
+→ Project Development
+→ Impact Tracking
+
+The system is intended for the Jharkhand ecosystem and should connect:
+
+Citizen
+Government
+University / HEI
+Faculty / Experts
+Industry / Startup / MSME
+
+
+==================================================
+2. PROBLEM STATEMENT SUMMARY
+==================================================
+
+Communities in Jharkhand face many unresolved local challenges involving:
+
+- Education
+- Healthcare
+- Agriculture
+- Water management
+- Sanitation
+- Environment
+- Rural livelihoods
+- Accessibility
+- Urban infrastructure
+- Public service delivery
+
+There is currently no centralized mechanism for citizens to submit these challenges and have them systematically:
+
+- collected
+- categorized
+- validated
+- prioritized
+- matched with university expertise
+- connected with industry
+- tracked through implementation
+- evaluated for social impact
+
+Universities have students, faculty, research expertise and innovation capabilities.
+
+Industry has technical expertise, funding, mentorship, prototyping and deployment capabilities.
+
+SAATHI aims to connect these fragmented stakeholders through one platform.
+
+
+==================================================
+3. CORE VALUE PROPOSITION
+==================================================
+
+The platform should transform:
+
+"Someone reports a societal problem"
+
+into:
+
+"That problem is understood by AI, matched with appropriate expertise, assigned to capable institutions, developed collaboratively, and tracked until measurable impact."
+
+
+==================================================
+4. IMPORTANT PROJECT DECISIONS
+==================================================
+
+Frontend:
+- Being developed separately by a teammate.
+- Current focus is BACKEND.
+- Do NOT redesign or rebuild the frontend unless specifically requested.
+
+Backend:
+- Python
+- Flask
+
+Authentication:
+- Explicitly removed from current scope.
+- We still maintain a users table so submissions can be associated with people/organizations.
+- No login/password/authentication system is currently being built.
+
+Database:
+- PostgreSQL
+- PostgreSQL is running inside Docker for this project.
+- pgvector is installed through the Docker image.
+
+Docker database:
+Image:
+pgvector/pgvector:pg17
+
+Container:
+saathi-db
+
+Database:
+saathi
+
+Host:
+localhost
+
+Host Port:
+5433
+
+Container Port:
+5432
+
+Username:
+postgres
+
+Password:
+1234567890
+
+Connection:
+localhost:5433
+
+The user's native PostgreSQL 18.2 installation already exists on port 5432, so the SAATHI Docker database deliberately uses port 5433.
+
+PostGIS:
+- NOT currently being used.
+- Location is stored using latitude and longitude.
+- Do not introduce PostGIS unless there is a specific reason later.
+
+Cloud:
+- Not currently being used.
+- Do not introduce cloud infrastructure unless specifically required.
+
+Deployment:
+- Not currently being discussed/built.
+
+Notifications:
+- Explicitly removed from current focus.
+
+LLM:
+- Groq API
+- The API key is stored in .env.
+- We are NOT running Mistral locally.
+
+Current Groq model:
+openai/gpt-oss-20b
+
+The user's Groq API key was checked against the available model list and this model is available.
+
+Embedding model:
+Sentence Transformers
+
+Model:
+all-MiniLM-L6-v2
+
+Embedding dimension:
+384
+
+Vector database:
+pgvector inside PostgreSQL.
+
+Node.js / Express:
+- NOT used.
+- Backend is Python Flask.
+
+
+==================================================
+5. CURRENT TECHNOLOGY STACK
+==================================================
+
+Frontend:
+- HTML/CSS/JavaScript
+- Developed separately by teammate
+
+Backend:
+- Python 3.11
+- Flask
+
+AI:
+- Groq API
+- openai/gpt-oss-20b
+
+Embeddings:
+- Sentence Transformers
+- all-MiniLM-L6-v2
+- 384 dimensions
+
+Database:
+- PostgreSQL 17 in Docker
+
+Vector search:
+- pgvector
+
+Environment variables:
+- python-dotenv
+
+Database Python driver:
+- psycopg
+
+Likely OCR/file-processing technologies later:
+- Tesseract OCR
+- Python document parsers
+These have NOT yet been implemented.
+
+
+==================================================
+6. CURRENT PROJECT STRUCTURE
+==================================================
+
+Current structure is approximately:
+
+saathi/
+│
+├── app.py
+├── .env
+├── .gitignore
+├── requirements.txt
+│
+├── database/
+│   └── connection.py
+│
+├── routes/
+│   └── problems.py
+│
+├── services/
+│   ├── llm.py
+│   ├── embeddings.py
+│   ├── matching.py
+│   ├── faculty_embeddings.py
+│   └── university_matching.py
+│
+├── uploads/
+│
+└── venv/
+
+
+The frontend is currently being developed separately by another teammate.
+
+
+==================================================
+7. FLASK SETUP
+==================================================
+
+app.py currently connects Flask to PostgreSQL and registers the problems blueprint.
+
+Conceptually:
+
+from flask import Flask
+from database.connection import get_connection
+from routes.problems import problems_bp
+
+app = Flask(__name__)
+
+app.register_blueprint(problems_bp)
+
+The backend has already successfully connected to PostgreSQL.
+
+
+==================================================
+8. DATABASE CONNECTION
+==================================================
+
+database/connection.py uses:
+
+- python-dotenv
+- psycopg
+
+Environment variables:
+
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=saathi
+DB_USER=postgres
+DB_PASSWORD=1234567890
+
+get_connection() returns a PostgreSQL connection.
+
+Database connectivity has already been tested successfully.
+
+
+==================================================
+9. DATABASE SCHEMA
+==================================================
+
+The following tables currently exist:
+
+1. users
+2. problems
+3. attachments
+4. universities
+5. faculty
+6. industries
+7. matches
+8. projects
+
+
+--------------------------------------------------
+users
+--------------------------------------------------
+
+Fields:
+
+id
+name
+email
+role
+organization
+created_at
+
+Roles are conceptually:
+
+CITIZEN
+GOVERNMENT
+UNIVERSITY
+INDUSTRY
+
+Authentication is NOT implemented.
+
+
+--------------------------------------------------
+problems
+--------------------------------------------------
+
+Fields:
+
+id
+user_id
+title
+description
+domain
+severity
+affected_people
+status
+ai_summary
+ai_keywords
+latitude
+longitude
+embedding
+created_at
+updated_at
+required_expertise
+
+embedding:
+VECTOR(384)
+
+required_expertise:
+TEXT[]
+
+
+--------------------------------------------------
+attachments
+--------------------------------------------------
+
+Fields:
+
+id
+problem_id
+file_name
+file_type
+file_path
+extracted_text
+created_at
+
+This exists for future file processing.
+
+Actual file parsing/OCR has NOT yet been implemented.
+
+
+--------------------------------------------------
+universities
+--------------------------------------------------
+
+Fields:
+
+id
+name
+description
+location
+website
+created_at
+
+
+--------------------------------------------------
+faculty
+--------------------------------------------------
+
+Fields:
+
+id
+university_id
+name
+department
+designation
+expertise
+embedding
+created_at
+
+embedding:
+VECTOR(384)
+
+
+--------------------------------------------------
+industries
+--------------------------------------------------
+
+Fields:
+
+id
+name
+description
+industry_type
+expertise
+embedding
+created_at
+
+embedding:
+VECTOR(384)
+
+Industry matching has NOT yet been implemented.
+
+
+--------------------------------------------------
+matches
+--------------------------------------------------
+
+Fields:
+
+id
+problem_id
+university_id
+faculty_id
+industry_id
+similarity_score
+match_reason
+created_at
+
+This table exists but recommendations are currently generated dynamically rather than permanently stored here.
+
+
+--------------------------------------------------
+projects
+--------------------------------------------------
+
+Fields:
+
+id
+problem_id
+title
+description
+status
+start_date
+end_date
+created_at
+updated_at
+
+Project lifecycle functionality is NOT yet implemented.
+
+
+==================================================
+10. CURRENT PROBLEM SUBMISSION FLOW
+==================================================
+
+The first working backend feature is problem submission.
+
+Endpoint:
+
+POST /api/problems
+
+The frontend/Postman sends JSON such as:
+
+{
+    "name": "Rahul",
+    "email": "rahul@example.com",
+    "role": "CITIZEN",
+    "organization": null,
+    "title": "Irregular water supply",
+    "description": "Our village receives water only twice a week.",
+    "domain": "WATER",
+    "latitude": 23.3441,
+    "longitude": 85.3096
+}
+
+The backend:
+
+1. Validates basic required fields.
+2. Creates a user.
+3. Creates a problem.
+4. Returns the problem ID.
+
+Example response:
+
+{
+    "message": "Problem submitted successfully",
+    "problem_id": 1
+}
+
+This endpoint is working.
+
+
+==================================================
+11. CURRENT PROBLEM RETRIEVAL API
+==================================================
+
+GET /api/problems
+
+Returns all submitted problems.
+
+This endpoint is working.
+
+GET /api/problems/<id>
+
+Returns one problem and its submitter information.
+
+This endpoint is working.
+
+
+==================================================
+12. GROQ AI ROLE
+==================================================
+
+Groq is NOT being used for embeddings.
+
+Groq is the reasoning/analysis layer.
+
+Its job is to understand raw societal problem submissions and convert them into structured information.
+
+The AI extracts:
+
+- summary
+- domain
+- severity
+- affected_people
+- keywords
+- required_expertise
+
+Example:
+
+Raw problem:
+
+Title:
+Irregular water supply
+
+Description:
+Our village receives water only twice a week.
+
+Groq returns approximately:
+
+{
+    "summary": "Village receives water only twice a week, leading to water scarcity and health risks.",
+    "domain": "Infrastructure",
+    "severity": "HIGH",
+    "affected_people": "Village residents",
+    "keywords": [
+        "water supply",
+        "irregular",
+        "village",
+        "Jharkhand",
+        "water scarcity"
+    ],
+    "required_expertise": [
+        "Civil Engineering",
+        "Water Resources Management",
+        "Public Policy"
+    ]
+}
+
+The actual output has been successfully generated by Groq.
+
+Groq output is forced into JSON using:
+
+response_format={"type": "json_object"}
+
+The code uses json.loads() to convert the response into a Python object.
+
+
+==================================================
+13. GROQ ENDPOINT
+==================================================
+
+Current endpoint:
+
+POST /api/problems/<problem_id>/analyze
+
+This endpoint:
+
+1. Retrieves problem title and description.
+2. Sends them to Groq.
+3. Gets structured AI analysis.
+4. Stores:
+   - ai_summary
+   - domain
+   - severity
+   - affected_people
+   - ai_keywords
+   - required_expertise
+5. Generates a 384-dimensional embedding.
+6. Stores the embedding in PostgreSQL/pgvector.
+
+Example successful response:
+
+{
+    "analysis": {
+        "affected_people": "Village residents",
+        "domain": "Infrastructure",
+        "keywords": [
+            "water supply",
+            "irregular",
+            "village",
+            "Jharkhand",
+            "water scarcity"
+        ],
+        "required_expertise": [
+            "Civil Engineering",
+            "Water Resources Management",
+            "Public Policy"
+        ],
+        "severity": "HIGH",
+        "summary": "Village receives water only twice a week, leading to water scarcity and health risks."
+    },
+    "message": "Problem analyzed and embedded successfully",
+    "problem_id": 1
+}
+
+This endpoint is working.
+
+
+==================================================
+14. EMBEDDING SYSTEM
+==================================================
+
+We use:
+
+SentenceTransformer:
+all-MiniLM-L6-v2
+
+It generates:
+384-dimensional embeddings.
+
+Embedding flow:
+
+Text
+→ Sentence Transformer
+→ 384 numbers
+→ pgvector VECTOR(384)
+
+We initially embedded the whole problem.
+
+Later we improved the approach.
+
+The current matching approach focuses on the AI-generated required expertise rather than generic problem text.
+
+Example:
+
+Required expertise:
+
+Civil Engineering
+Water Resources Management
+Public Policy
+
+This is converted into a semantic vector.
+
+This vector is compared against faculty expertise vectors.
+
+
+==================================================
+15. FACULTY DATA
+==================================================
+
+For testing only, sample universities and faculty were manually inserted.
+
+IMPORTANT:
+These are SAMPLE DATA ONLY.
+They must NOT be presented as actual institutional partnerships or verified real-world faculty data.
+
+Sample universities:
+
+University A
+University B
+University C
+
+Sample faculty:
+
+Faculty A
+Department:
+Civil Engineering
+
+Expertise:
+Water resources, irrigation systems, rural infrastructure, hydraulic engineering
+
+
+Faculty B
+Department:
+Environmental Engineering
+
+Expertise:
+Water quality, environmental engineering, wastewater treatment
+
+
+Faculty C
+Department:
+Computer Science
+
+Expertise:
+IoT, smart systems, data analytics, artificial intelligence
+
+
+Faculty D
+Department:
+Rural Development
+
+Expertise:
+Rural development, public policy, community infrastructure
+
+
+Faculty E
+Department:
+Water Resources Engineering
+
+Expertise:
+Water resource management, hydrology, irrigation, water infrastructure
+
+
+==================================================
+16. FACULTY EMBEDDING GENERATION
+==================================================
+
+services/faculty_embeddings.py exists.
+
+It:
+
+1. Gets faculty whose embedding is NULL.
+2. Builds text from:
+   - faculty name
+   - department
+   - expertise
+3. Generates embedding using all-MiniLM-L6-v2.
+4. Stores it in faculty.embedding.
+
+It can be run using:
+
+python -m services.faculty_embeddings
+
+
+==================================================
+17. CURRENT SEMANTIC FACULTY MATCHING
+==================================================
+
+Endpoint:
+
+GET /api/problems/<problem_id>/matches
+
+The system:
+
+1. Gets the problem.
+2. Gets:
+   - domain
+   - title
+   - required_expertise
+3. Builds an expertise-focused text.
+4. Generates the problem embedding.
+5. Stores it in problems.embedding.
+6. Uses pgvector cosine distance.
+7. Finds the most semantically similar faculty.
+8. Returns ranked faculty matches.
+
+pgvector comparison:
+
+f.embedding <=> problem_embedding
+
+The result is converted into cosine similarity:
+
+1 - cosine_distance
+
+
+==================================================
+18. IMPORTANT MATCHING CHANGE
+==================================================
+
+An earlier version used:
+
+70% semantic similarity
+20% domain substring matching
+10% keyword overlap
+
+That was rejected because the rule-based scoring was too crude.
+
+For example:
+
+"Infrastructure"
+
+was being scored as either:
+
+0.8 or 0.0
+
+depending on whether the literal word existed in a string.
+
+This was considered too brittle.
+
+The current matching engine therefore relies primarily on semantic similarity.
+
+Current matching result for the water problem:
+
+1. Water Resources Engineering
+   Similarity: 0.6366
+
+2. Civil Engineering
+   Similarity: 0.6246
+
+3. Environmental Engineering
+   Similarity: 0.5398
+
+4. Rural Development
+   Similarity: 0.3359
+
+5. Computer Science
+   Similarity: 0.2512
+
+This ranking is considered reasonable because the top results are actually relevant to the problem.
+
+
+==================================================
+19. CURRENT UNIVERSITY MATCHING
+==================================================
+
+services/university_matching.py exists.
+
+Endpoint:
+
+GET /api/problems/<problem_id>/universities
+
+University ranking is derived from faculty matches.
+
+Current university scoring:
+
+70% best faculty score
+30% average faculty score
+
+Example:
+
+University C:
+Best faculty = 0.6366
+Average = 0.6366
+Faculty count = 1
+University score = 0.6366
+
+University A:
+Best faculty = 0.6246
+Average = 0.5822
+Faculty count = 2
+University score = 0.6119
+
+University B:
+Best faculty = 0.3359
+Average = 0.2935
+Faculty count = 2
+University score = 0.3232
+
+Current output:
+
+{
+    "problem_id": 1,
+    "universities": [
+        {
+            "average_faculty_score": 0.6366,
+            "best_faculty_score": 0.6366,
+            "faculty_count": 1,
+            "university_id": 3,
+            "university_name": "University C",
+            "university_score": 0.6366
+        },
+        {
+            "average_faculty_score": 0.5822,
+            "best_faculty_score": 0.6246,
+            "faculty_count": 2,
+            "university_id": 1,
+            "university_name": "University A",
+            "university_score": 0.6119
+        },
+        {
+            "average_faculty_score": 0.2935,
+            "best_faculty_score": 0.3359,
+            "faculty_count": 2,
+            "university_id": 2,
+            "university_name": "University B",
+            "university_score": 0.3232
+        }
+    ]
+}
+
+
+==================================================
+20. CURRENT WORKING BACKEND ENDPOINTS
+==================================================
+
+POST /api/problems
+Create a societal problem.
+
+GET /api/problems
+Retrieve all problems.
+
+GET /api/problems/<id>
+Retrieve a single problem.
+
+POST /api/problems/<id>/analyze
+Run Groq analysis and generate/store embedding.
+
+GET /api/problems/<id>/matches
+Return semantic faculty matches.
+
+GET /api/problems/<id>/universities
+Return university recommendations aggregated from faculty matches.
+
+
+==================================================
+21. CURRENT END-TO-END PIPELINE
+==================================================
+
+Current working pipeline:
+
+Citizen submission
+        ↓
+POST /api/problems
+        ↓
+PostgreSQL
+        ↓
+POST /api/problems/<id>/analyze
+        ↓
+Groq API
+        ↓
+Structured AI analysis
+        ↓
+Required Expertise
+        ↓
+Sentence Transformer
+        ↓
+384D embedding
+        ↓
+pgvector
+        ↓
+Faculty semantic matching
+        ↓
+University aggregation
+
+
+==================================================
+22. WHAT HAS NOT BEEN BUILT YET
+==================================================
+
+These are future tasks:
+
+A. File upload processing
+- Images
+- PDF
+- DOCX
+- Other documents
+- OCR
+- Text extraction
+
+B. Better problem ingestion pipeline
+
+Potential future flow:
+
+Submission
+→ Parse files
+→ Extract text
+→ Combine text
+→ Groq analysis
+→ Embedding
+→ pgvector
+
+
+C. Industry matching
+
+We have an industries table and embedding field, but matching is NOT implemented yet.
+
+Future:
+
+Problem
+→ Required Expertise
+→ Embedding
+→ Industry expertise embeddings
+→ Ranked industry partners
+
+
+D. Unified recommendation endpoint
+
+Potential future endpoint:
+
+GET /api/problems/<id>/recommendations
+
+Returning:
+
+- universities
+- faculty
+- industries
+
+
+E. Duplicate problem detection
+
+This is a major PS requirement.
+
+Potential approach:
+
+New problem embedding
+→ pgvector similarity search
+→ detect semantically similar existing problems
+→ flag possible duplicate
+
+
+F. Challenge prioritization
+
+Could use:
+
+- severity
+- affected population
+- urgency
+- domain
+- AI reasoning
+
+Potentially Groq can help extract priority signals.
+
+
+G. Project lifecycle
+
+Future functionality:
+
+Problem
+→ Accepted by university
+→ Team formed
+→ Faculty mentor
+→ Proposal
+→ Milestones
+→ Prototype
+→ Testing
+→ Deployment
+→ Impact measurement
+
+
+H. Impact tracking
+
+Potential future metrics:
+
+- people affected
+- problems solved
+- projects completed
+- districts covered
+- university participation
+- industry participation
+- prototypes
+- deployments
+- measurable social outcomes
+
+
+I. Government dashboard
+
+Future analytics:
+
+- problems by district
+- problems by domain
+- severity distribution
+- university participation
+- industry participation
+- project status
+- impact metrics
+
+
+==================================================
+23. FILE TYPES PLANNED FOR INPUT
+==================================================
+
+The platform may eventually accept:
+
+Images:
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Documents:
+- PDF
+- DOCX
+- TXT
+
+Potential future:
+- XLSX / CSV if structured evidence/data is useful
+
+The actual parser/OCR system has not yet been implemented.
+
+Do NOT assume all of these are currently supported.
+
+
+==================================================
+24. IMPORTANT ARCHITECTURAL PRINCIPLES
+==================================================
+
+1. Keep the backend simple.
+2. Do not introduce Node.js or Express.
+3. Do not introduce authentication right now.
+4. Do not introduce cloud services unnecessarily.
+5. Do not introduce PostGIS unless required.
+6. Groq is the reasoning/structured-analysis layer.
+7. Sentence Transformers is the local embedding layer.
+8. pgvector is the vector search layer.
+9. PostgreSQL is the primary database.
+10. Flask exposes REST APIs for the frontend.
+11. Avoid arbitrary scoring rules when semantic similarity can solve the problem.
+12. Avoid overengineering.
+13. Build and test each layer independently.
+14. Existing working functionality should not be broken when adding new functionality.
+15. Sample universities/faculty are test data, not real partnerships.
+
+
+==================================================
+25. FRONTEND INTEGRATION
+==================================================
+
+A teammate is currently developing the frontend.
+
+The frontend should eventually communicate with Flask through HTTP/JSON.
+
+Current APIs can be consumed by the frontend.
+
+Likely flow:
+
+Frontend problem submission
+→ POST /api/problems
+
+Dashboard:
+→ GET /api/problems
+
+Problem detail:
+→ GET /api/problems/<id>
+
+AI analysis:
+→ POST /api/problems/<id>/analyze
+
+Faculty recommendations:
+→ GET /api/problems/<id>/matches
+
+University recommendations:
+→ GET /api/problems/<id>/universities
+
+CORS may be needed if frontend and Flask run on different ports.
+
+Flask-CORS can be used.
+
+
+==================================================
+26. CURRENT DEVELOPMENT PRIORITY
+==================================================
+
+The frontend should NOT be the current priority.
+
+The immediate backend priority is:
+
+1. Connect existing backend to teammate's UI.
+2. Ensure APIs match what the UI actually needs.
+3. Then improve/extend:
+   - file processing
+   - duplicate detection
+   - prioritization
+   - industry matching
+   - unified recommendations
+   - project lifecycle
+   - impact tracking
+
+
+==================================================
+27. HOW TO THINK ABOUT SAATHI
+==================================================
+
+SAATHI should NOT be treated as merely:
+
+"an AI chatbot for societal problems."
+
+It is primarily:
+
+"A societal innovation collaboration platform."
+
+AI is used to automate intelligence-heavy parts of the workflow:
+
+- classification
+- summarization
+- expertise extraction
+- semantic matching
+- duplicate detection
+- prioritization
+
+The actual platform connects the ecosystem:
+
+Citizen
+↕
+Government
+↕
+University
+↕
+Faculty
+↕
+Industry
+↕
+Project
+↕
+Impact
+
+
+==================================================
+28. CURRENT STATUS
+==================================================
+
+WORKING:
+- Python 3.11 environment
+- Flask backend
+- Docker PostgreSQL
+- pgvector
+- Database connection
+- Database schema
+- Problem creation API
+- Problem retrieval APIs
+- Groq API integration
+- Structured Groq JSON output
+- AI analysis storage
+- Sentence Transformer embeddings
+- Problem embeddings
+- Faculty embeddings
+- Semantic faculty matching
+- University aggregation
+
+NOT YET BUILT:
+- Frontend integration
+- File upload/parsing
+- OCR
+- Duplicate detection
+- Prioritization engine
+- Industry matching
+- Unified recommendations
+- Project lifecycle
+- Impact tracking
+- Government analytics dashboard
+
+
+==================================================
+29. MOST IMPORTANT CURRENT API FLOW
+==================================================
+
+For a new problem:
+
+1.
+POST /api/problems
+
+Creates the problem.
+
+2.
+POST /api/problems/1/analyze
+
+Groq analyzes it and creates the embedding.
+
+3.
+GET /api/problems/1/matches
+
+Returns relevant faculty.
+
+4.
+GET /api/problems/1/universities
+
+Returns recommended universities.
+
+
+==================================================
+30. DEVELOPMENT STYLE
+==================================================
+
+The project is being built incrementally.
+
+Do not dump the entire final system at once.
+
+Prefer:
+
+Build one component
+→ test it
+→ integrate it
+→ move to next component.
+
+The user confirms when something works.
+When the user says something works, accept that as confirmation and move forward rather than repeatedly asking for screenshots or validation.
+
+The user is comfortable with VS Code, Postman, PostgreSQL/pgAdmin and Docker but may need clear step-by-step instructions for unfamiliar backend/ML concepts.
+
+When modifying existing code, clearly identify which file is being changed and provide the exact relevant code.
+
+Avoid unnecessary complexity and unnecessary dependencies.
