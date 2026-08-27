@@ -64,6 +64,7 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
               {item.label}
             </NavLink>
           ))}
+
           <button
             onClick={() => {
               logout();

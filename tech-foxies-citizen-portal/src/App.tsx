@@ -27,6 +27,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Navigate to="/citizen/dashboard" replace />} />
           
+          {/* Citizen Routes */}
           <Route path="/citizen" element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
